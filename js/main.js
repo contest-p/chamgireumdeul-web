@@ -2,7 +2,7 @@
  * 참기름들 사이트 메인 JavaScript
  * - 모바일 메뉴 열기/닫기
  * - 네비게이션 스크롤 & 활성 링크 표시
- * - AI 추천 폼 UI (API 연동 전 임시 동작)
+ * - AI 추천 폼 → /api/recommend API 연동
  * - 문의 폼 기본 처리
  */
 
@@ -95,12 +95,13 @@ function initScrollSpy() {
 }
 
 /* ============================================
-   AI 추천 폼 (UI만 — API 연동은 추후)
+   AI 추천 폼 — /api/recommend 백엔드 연동
    ============================================ */
 function initAiForm() {
   const form = document.getElementById("aiForm");
   const resultBox = document.getElementById("aiResult");
   const placeholder = document.getElementById("aiPlaceholder");
+  const submitBtn = form?.querySelector('button[type="submit"]');
 
   // 결과를 표시할 DOM 요소들
   const resultOil = document.getElementById("resultOil");
@@ -109,44 +110,48 @@ function initAiForm() {
 
   if (!form || !resultBox || !placeholder) return;
 
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault(); // 페이지 새로고침 방지
 
     const dishName = document.getElementById("dishName").value.trim();
     if (!dishName) return;
 
-    // ----- 아래는 API 연동 전 임시(목업) 데이터입니다 -----
-    // 나중에 fetch() 등으로 서버 API를 호출하고
-    // 응답 JSON을 아래 변수들에 넣으면 됩니다.
+    // 로딩 상태: 결과 영역 숨기고 로딩 메시지 표시
+    resultBox.hidden = true;
+    placeholder.hidden = false;
+    placeholder.innerHTML = '<p class="ai-loading">참기름 궁합을 확인하고 있어요...</p>';
 
-    const mockData = getMockRecommendation(dishName);
+    if (submitBtn) submitBtn.disabled = true;
 
-    // [API 연동 예정] 추천 기름 — response.recommendedOil
-    resultOil.textContent = mockData.recommendedOil;
+    try {
+      const response = await fetch("/api/recommend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dishName }),
+      });
 
-    // [API 연동 예정] 추천 이유 — response.reason
-    resultReason.textContent = mockData.reason;
+      const data = await response.json();
 
-    // [API 연동 예정] 개선 레시피 — response.improvedRecipe
-    resultRecipe.textContent = mockData.improvedRecipe;
+      // 서버가 에러 응답(400, 500 등)을 보낸 경우
+      if (!response.ok) {
+        placeholder.innerHTML = `<p class="ai-error">${data.error || "잠시 후 다시 시도해주세요"}</p>`;
+        return;
+      }
 
-    // 결과 영역을 보이고, 안내 문구는 숨깁니다
-    placeholder.hidden = true;
-    resultBox.hidden = false;
+      // 정상 응답: API에서 받은 데이터를 화면에 표시
+      resultOil.textContent = data.recommendedOil;
+      resultReason.textContent = data.reason;
+      resultRecipe.textContent = data.improvedRecipe;
+
+      placeholder.hidden = true;
+      resultBox.hidden = false;
+    } catch {
+      // fetch 자체 실패 (네트워크 오류 등)
+      placeholder.innerHTML = '<p class="ai-error">잠시 후 다시 시도해주세요</p>';
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
   });
-}
-
-/**
- * API 연동 전 UI 확인용 임시 추천 데이터
- * @param {string} dishName - 사용자가 입력한 요리명
- * @returns {{ recommendedOil: string, reason: string, improvedRecipe: string }}
- */
-function getMockRecommendation(dishName) {
-  return {
-    recommendedOil: "저온압착 참기름",
-    reason: `「${dishName}」은 고소한 향이 어울리는 요리입니다. 저온압착 참기름은 영양과 향을 살려 마무리에 뿌리기 좋습니다.`,
-    improvedRecipe: `1. ${dishName}을(를) 평소대로 준비합니다.\n2. 완성 직전 저온압착 참기름 1~2스푼을 둘러 고소함을 더합니다.\n3. 참기름 향이 날아가지 않도록 불을 끈 뒤 첨가하세요.`,
-  };
 }
 
 /* ============================================

@@ -311,12 +311,6 @@ img {
   gap: 1.5rem;
 }
 
-/* 본점 계절 메뉴: 카드 2개(여름/겨울), 가운데 정렬 */
-.food-grid--seasonal {
-  grid-template-columns: repeat(2, minmax(240px, 320px));
-  justify-content: center;
-}
-
 .food-card {
   text-align: center;
 }
@@ -324,12 +318,6 @@ img {
 .food-image {
   min-height: 140px;
   margin-bottom: 0.75rem;
-}
-
-/* 계절 배지: hero-tag 스타일 재사용, 카드 안에서 위치만 조정 */
-.food-card .food-badge {
-  display: inline-block;
-  margin-bottom: 0.5rem;
 }
 
 .food-card h4 {
@@ -425,10 +413,25 @@ img {
   color: var(--color-brown-light);
 }
 
-.ai-note {
-  font-size: 0.85rem;
-  margin-top: 0.5rem;
+/* AI 추천 로딩 상태 */
+.ai-loading {
+  font-size: 1.05rem;
   color: var(--color-primary);
+  font-weight: 500;
+}
+
+/* AI 추천 에러 메시지 */
+.ai-error {
+  font-size: 1rem;
+  color: #a63d2f;
+  font-weight: 500;
+}
+
+/* 로딩 중 버튼 비활성화 스타일 */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* ============================================
@@ -507,12 +510,6 @@ img {
   .product-grid,
   .food-grid {
     grid-template-columns: 1fr;
-  }
-
-  .food-grid--seasonal {
-    grid-template-columns: 1fr;
-    max-width: 320px;
-    margin: 0 auto;
   }
 
   .section {
