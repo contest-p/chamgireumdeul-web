@@ -8,6 +8,7 @@ POST /api/recommend
 import json
 import os
 import re
+import traceback
 from http.server import BaseHTTPRequestHandler
 
 import google.generativeai as genai
@@ -49,6 +50,10 @@ def build_prompt(dish_name: str) -> str:
 def generate_recommendation(dish_name: str) -> dict:
     """Gemini API를 호출해 기름 추천 결과를 생성합니다."""
     api_key = os.environ.get("GEMINI_API_KEY")
+
+    # [디버깅] 키가 실제로 읽히는지, 길이만 로그에 남깁니다 (키 값 자체는 노출 안 함)
+    print(f"[DEBUG] GEMINI_API_KEY present: {bool(api_key)}, length: {len(api_key) if api_key else 0}")
+
     if not api_key:
         raise GeminiAPIError("GEMINI_API_KEY 환경 변수가 설정되지 않았습니다.")
 
@@ -64,7 +69,9 @@ def generate_recommendation(dish_name: str) -> dict:
     try:
         response = model.generate_content(build_prompt(dish_name))
     except Exception as exc:
-        # Gemini API 4xx/5xx 등 호출 실패
+        # [디버깅] 실제 예외 내용을 로그에 전부 남깁니다
+        print(f"[DEBUG] Gemini API call failed: {type(exc).__name__}: {exc}")
+        print(traceback.format_exc())
         raise GeminiAPIError(str(exc)) from exc
 
     if not response or not response.text:
@@ -109,10 +116,14 @@ class handler(BaseHTTPRequestHandler):
         try:
             result = generate_recommendation(dish_name)
             self._send_json(200, result)
-        except GeminiAPIError:
+        except GeminiAPIError as exc:
+            # [디버깅] 어떤 이유로 GeminiAPIError가 발생했는지 로그에 남깁니다
+            print(f"[DEBUG] GeminiAPIError: {exc}")
             self._send_json(500, {"error": ERROR_MSG_GENERIC})
-        except Exception:
-            # JSON 파싱 실패, 필드 검증 실패 등 예상 못한 오류
+        except Exception as exc:
+            # [디버깅] 예상 못한 오류도 전체 내용을 로그에 남깁니다
+            print(f"[DEBUG] Unexpected error: {type(exc).__name__}: {exc}")
+            print(traceback.format_exc())
             self._send_json(500, {"error": ERROR_MSG_GENERIC})
 
     def _send_json(self, status_code: int, data: dict):
