@@ -156,46 +156,61 @@ function initAiForm() {
 
 /* ============================================
    문의 폼 기본 처리
-   (구글 스프레드시트 연동 완료)
+   (구글 시트 연동 & 연락처 실시간 자동 하이픈)
    ============================================ */
 function initContactForm() {
   const form = document.getElementById("contactForm");
-  // 전송 버튼을 찾아 중복 클릭을 방지하기 위한 변수입니다.
+  const phoneInput = document.getElementById("contactPhone");
   const submitBtn = form?.querySelector('button[type="submit"]');
 
   if (!form) return;
 
+  // 1. 입력창에 숫자를 적을 때 자동으로 하이픈(-)을 붙여줍니다.
+  if (phoneInput) {
+    phoneInput.addEventListener("input", (e) => {
+      // 숫자만 남기기
+      const val = e.target.value.replace(/[^0-9]/g, "");
+      let formatted = "";
+
+      if (val.length < 4) {
+        formatted = val;
+      } else if (val.length < 7) {
+        formatted = `${val.slice(0, 3)}-${val.slice(3)}`;
+      } else if (val.length < 11) {
+        formatted = `${val.slice(0, 3)}-${val.slice(3, 6)}-${val.slice(6)}`;
+      } else {
+        // 11자리(010-1234-5678) 형태
+        formatted = `${val.slice(0, 3)}-${val.slice(3, 7)}-${val.slice(7, 11)}`;
+      }
+
+      e.target.value = formatted;
+    });
+  }
+
+  // 2. 폼 제출 처리
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     const name = document.getElementById("contactName").value.trim();
-    const rawPhone = document.getElementById("contactPhone").value.trim();
-    // 입력된 값에서 숫자만 남긴 뒤, 010-1234-5678 형태로 하이픈(-)을 자동으로 붙여줍니다.
-    const phone = rawPhone.replace(/[^0-9]/g, "").replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, "$1-$2-$3");
+    const phone = phoneInput ? phoneInput.value.trim() : "";
     const message = document.getElementById("contactMessage").value.trim();
 
-    // 데이터가 넘어가는 동안 버튼을 비활성화해서 여러 번 눌리는 것을 막습니다.
     if (submitBtn) submitBtn.disabled = true;
 
     try {
-      // 알려주신 구글 Apps Script 웹 앱 URL입니다.
       const scriptURL = "https://script.google.com/macros/s/AKfycbz7RiyrRWficB_Hv52Ka9W8KlaInM6RjO_SFL9k0XsyIa1Vj5g4BKlktn3XUrn8djvM/exec";
 
-      // fetch 함수를 이용해 서버로 데이터를 쏩니다.
       await fetch(scriptURL, {
         method: "POST",
-        // 브라우저 보안 에러를 피하기 위해 내용물을 텍스트 형태로 보냅니다.S
         headers: { "Content-Type": "text/plain" },
         body: JSON.stringify({ name, phone, message }),
       });
 
-      // 성공적으로 보내지면 안내 메시지를 띄우고 폼 칸을 비웁니다.
       alert(`${name}님, 문의가 성공적으로 접수되었습니다!`);
       form.reset();
     } catch (error) {
       alert("전송에 실패했습니다. 다시 시도해주세요.");
     } finally {
-      // 처리가 끝나면 다시 버튼을 누를 수 있게 돌려놓습니다.
       if (submitBtn) submitBtn.disabled = false;
     }
   });
