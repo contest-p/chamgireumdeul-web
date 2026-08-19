@@ -169,7 +169,9 @@ function initContactForm() {
     event.preventDefault();
 
     const name = document.getElementById("contactName").value.trim();
-    const phone = document.getElementById("contactPhone").value.trim();
+    const rawPhone = document.getElementById("contactPhone").value.trim();
+    // 입력된 값에서 숫자만 남긴 뒤, 010-1234-5678 형태로 하이픈(-)을 자동으로 붙여줍니다.
+    const phone = rawPhone.replace(/[^0-9]/g, "").replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, "$1-$2-$3");
     const message = document.getElementById("contactMessage").value.trim();
 
     // 데이터가 넘어가는 동안 버튼을 비활성화해서 여러 번 눌리는 것을 막습니다.
