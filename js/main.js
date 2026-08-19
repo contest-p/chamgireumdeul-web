@@ -156,22 +156,45 @@ function initAiForm() {
 
 /* ============================================
    문의 폼 기본 처리
-   (서버 연동 전: 제출 시 확인 메시지만 표시)
+   (구글 스프레드시트 연동 완료)
    ============================================ */
 function initContactForm() {
   const form = document.getElementById("contactForm");
+  // 전송 버튼을 찾아 중복 클릭을 방지하기 위한 변수입니다.
+  const submitBtn = form?.querySelector('button[type="submit"]');
+
   if (!form) return;
 
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     const name = document.getElementById("contactName").value.trim();
     const phone = document.getElementById("contactPhone").value.trim();
     const message = document.getElementById("contactMessage").value.trim();
 
-    // 실제 서비스에서는 여기서 fetch()로 서버에 전송합니다
-    alert(`${name}님, 문의가 접수되었습니다.\n연락처: ${phone}\n\n(현재는 프론트엔드 UI만 구현된 상태입니다.)`);
+    // 데이터가 넘어가는 동안 버튼을 비활성화해서 여러 번 눌리는 것을 막습니다.
+    if (submitBtn) submitBtn.disabled = true;
 
-    form.reset();
+    try {
+      // 알려주신 구글 Apps Script 웹 앱 URL입니다.
+      const scriptURL = "https://script.google.com/macros/s/AKfycbz7RiyrRWficB_Hv52Ka9W8KlaInM6RjO_SFL9k0XsyIa1Vj5g4BKlktn3XUrn8djvM/exec";
+
+      // fetch 함수를 이용해 서버로 데이터를 쏩니다.
+      await fetch(scriptURL, {
+        method: "POST",
+        // 브라우저 보안 에러를 피하기 위해 내용물을 텍스트 형태로 보냅니다.S
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ name, phone, message }),
+      });
+
+      // 성공적으로 보내지면 안내 메시지를 띄우고 폼 칸을 비웁니다.
+      alert(`${name}님, 문의가 성공적으로 접수되었습니다!`);
+      form.reset();
+    } catch (error) {
+      alert("전송에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      // 처리가 끝나면 다시 버튼을 누를 수 있게 돌려놓습니다.
+      if (submitBtn) submitBtn.disabled = false;
+    }
   });
 }
