@@ -36,7 +36,7 @@ AI가 요리명 하나만으로 어울리는 기름과 그 기름을 활용한 �
 |---|---|
 | 프론트엔드 | HTML5, CSS3, Vanilla JavaScript |
 | 백엔드 | Vercel Serverless Functions (Python) |
-| AI API | Google Gemini API (`gemini-2.5-flash`) |
+| AI API | Google Gemini API (`gemini-3.5-flash`) |
 | 배포 | Vercel |
 | 운영 자동화 | Google Apps Script + Google Sheets (문의 폼 자동 저장) |
 | 저장소 | GitHub |
